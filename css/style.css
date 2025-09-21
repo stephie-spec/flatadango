@@ -26,9 +26,6 @@
      background-color: white;
      border-radius: 5px;
      padding: 20px;
-     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-     max-height: 600px;
-     overflow-y: auto;
  }
 
  .movie-list h2 {
@@ -88,7 +85,7 @@
  }
 
  .movie-runtime {
-     color: darkgrey;
+     color: #333;
      margin-bottom: 15px;
  }
 
