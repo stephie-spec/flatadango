@@ -89,7 +89,7 @@ function fetchMovies() {
                     title.textContent = movie.title;
                     runtime.textContent = `${movie.runtime} minutes`;
                     description.textContent = movie.description;
-                    showtime.textContent = `Showtime: ${movie.showtime}`;
+                    showtime.textContent = `${movie.showtime}`;
                     
                     const availableTickets = movie.capacity - movie.tickets_sold;
                     ticketNum.textContent = `${availableTickets} remaining tickets`;
@@ -108,6 +108,45 @@ function fetchMovies() {
                 })
                 .catch(error => {
                     console.error('Error fetching movie details:', error);
-                    movieDetails.innerHTML = 'Error loading movie details';
                 });
+        }
+
+
+        function deleteMovie(movieId) {
+            fetch(`http://localhost:3000/films/${movieId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete movie');
+                }
+                
+                allMovies = allMovies.filter(movie => movie.id !== movieId);
+                
+                displayMovies(allMovies);
+                
+                if (currentMovie && currentMovie.id === movieId) {
+                    if (allMovies.length > 0) {
+                        displayMovieDetails(allMovies[0].id);
+                    } else {
+                        clearMovieDetails();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting movie:', error);
+            });
+        }
+
+        function clearMovieDetails() {
+            currentMovie = null;
+            poster.style.display = 'none';
+            title.textContent = '';
+            runtime.textContent = '';
+            description.textContent = '';
+            showtime.textContent = '';
+            ticketNum.textContent = '';
+            buyTicketBtn.style.display = 'none';
+            movieDetails.style.display = 'block';
+            movieDetails.textContent = 'No movies available';
         }
