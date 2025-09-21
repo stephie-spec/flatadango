@@ -7,16 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentMovie = null;
 let allMovies = [];
 
-const filmsList = document.getElementById('films');
-const poster = document.getElementById('poster');
-const title = document.getElementById('title');
-const runtime = document.getElementById('runtime');
-const description = document.getElementById('description');
-const showtime = document.getElementById('showtime');
-const ticketNum = document.getElementById('ticket-num');
-const buyTicketBtn = document.getElementById('buy-ticket');
-const movieDetails = document.getElementById('movie-details');
-
+const filmsList = document.querySelector('#films');
+const poster = document.querySelector('#poster');
+const title = document.querySelector('#title');
+const runtime = document.querySelector('#runtime');
+const description = document.querySelector('#description');
+const showtime = document.querySelector('#showtime');
+const ticketNum = document.querySelector('#ticket-num');
+const buyTicketBtn = document.querySelector('#buy-ticket');
+const movieDetails = document.querySelector('.movie-details');
 
 function fetchMovies() {
     fetch(`http://localhost:3000/films`)
@@ -70,7 +69,7 @@ function displayMovies(movies) {
 }
 
 function displayMovieDetails(movieId) {
-    movieDetails.style.display = 'block';
+    movieDetails.style.display = 'flex';
     poster.style.display = 'none';
     buyTicketBtn.style.display = 'none';
 
@@ -89,7 +88,7 @@ function displayMovieDetails(movieId) {
             title.textContent = movie.title;
             runtime.textContent = `${movie.runtime} minutes`;
             description.textContent = movie.description;
-            showtime.textContent = `${movie.showtime}`;
+            showtime.textContent = `Showtime: ${movie.showtime}`;
 
             const availableTickets = movie.capacity - movie.tickets_sold;
             ticketNum.textContent = `${availableTickets} remaining tickets`;
@@ -102,7 +101,6 @@ function displayMovieDetails(movieId) {
                 buyTicketBtn.disabled = false;
             }
 
-            movieDetails.style.display = 'none';
             poster.style.display = 'block';
             buyTicketBtn.style.display = 'block';
         })
@@ -110,7 +108,6 @@ function displayMovieDetails(movieId) {
             console.error('Error fetching movie details:', error);
         });
 }
-
 
 function deleteMovie(movieId) {
     fetch(`http://localhost:3000/films/${movieId}`, {
@@ -151,52 +148,53 @@ function clearMovieDetails() {
     movieDetails.textContent = 'No movies available';
 }
 
-        function handleBuyTicket() {
-            const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
-            
-            if (availableTickets > 0) {
-                const updatedTicketsSold = currentMovie.tickets_sold + 1;
-                
-                fetch(`http://localhost:3000/films/${currentMovie.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tickets_sold: updatedTicketsSold
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to update tickets');
-                    }
-                    return response.json();
-                })
-                .then(updatedMovie => {
-                    currentMovie.tickets_sold = updatedTicketsSold;
-                    
-                    const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
-                    ticketNum.textContent = `${availableTickets} remaining tickets`;
-                    
-                    if (availableTickets === 0) {
-                        buyTicketBtn.textContent = 'Sold Out';
-                        buyTicketBtn.disabled = true;
-                        
-                        const movieItem = Array.from(filmsList.children).find(item => {
-                            return item.textContent.includes(currentMovie.title);
-                        });
-                        if (movieItem) {
-                            movieItem.classList.add('sold-out');
-                        }
-                    }
-                    
-                    const movieIndex = allMovies.findIndex(m => m.id === currentMovie.id);
-                    if (movieIndex !== -1) {
-                        allMovies[movieIndex].tickets_sold = currentMovie.tickets_sold;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating ticket count:', error);
-                });
+function handleBuyTicket() {
+    const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
+    
+    if (availableTickets > 0) {
+        const updatedTicketsSold = currentMovie.tickets_sold + 1;
+        
+        fetch(`http://localhost:3000/films/${currentMovie.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                tickets_sold: updatedTicketsSold
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update tickets');
             }
-        }
+            return response.json();
+        })
+        .then(updatedMovie => {
+            currentMovie = updatedMovie;
+            
+            const movieIndex = allMovies.findIndex(m => m.id === currentMovie.id);
+            if (movieIndex !== -1) {
+                allMovies[movieIndex] = updatedMovie;
+            }
+            
+            const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
+            ticketNum.textContent = `${availableTickets} remaining tickets`;
+            
+            if (availableTickets === 0) {
+                buyTicketBtn.textContent = 'Sold Out';
+                buyTicketBtn.disabled = true;
+                
+                const movieItems = filmsList.querySelectorAll('.film.item');
+                const listItem = Array.from(movieItems).find(item => 
+                    item.textContent.includes(currentMovie.title)
+                );
+                if (listItem) {
+                    listItem.classList.add('sold-out');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating ticket count:', error);
+        });
+    }
+}
