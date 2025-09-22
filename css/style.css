@@ -13,7 +13,7 @@
 
  .subtitle {
      font-size: 16px;
-     color:antiquewhite;
+     color: antiquewhite;
  }
 
  .main-content {
@@ -74,10 +74,10 @@
      gap: 20px;
  }
 
-#movie-info {
-    width: 100%;
-}
- 
+ #movie-info {
+     width: 100%;
+ }
+
  .movie-poster {
      margin-bottom: 20px;
      width: 100%;
@@ -125,7 +125,18 @@
  }
 
  .sold-out {
-     background-color: grey;
+     background-color: darkgrey;
+ }
+
+ .film.item.sold-out {
+     color: #fff;
+     text-decoration: line-through;
+     opacity: 0.7;
+ }
+
+ .film.item.active {
+     background-color: #e3f2fd;
+     border-left: 4px solid #2196f3;
  }
 
  .error {

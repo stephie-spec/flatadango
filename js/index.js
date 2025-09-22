@@ -50,25 +50,39 @@ function displayMovies(movies) {
     movies.forEach(movie => {
         const listItem = document.createElement('li');
         listItem.classList.add('film', 'item');
-
-        if (movie.capacity - movie.tickets_sold === 0) {
+        
+        const isSoldOut = movie.capacity - movie.tickets_sold === 0;
+        
+        if (isSoldOut) {
             listItem.classList.add('sold-out');
         }
 
         listItem.textContent = movie.title;
-        listItem.addEventListener('click', () => displayMovieDetails(movie.id));
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.classList.add('delete-btn');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.addEventListener('click', (e) => {
-            deleteMovie(movie.id);
+        listItem.addEventListener('click', () => {
+            const allItems = filmsList.querySelectorAll('.film.item');
+            allItems.forEach(item => item.classList.remove('active'));
+            
+            listItem.classList.add('active');
+            
+            displayMovieDetails(movie.id);
         });
 
-        listItem.appendChild(deleteBtn);
+        if (!isSoldOut) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                deleteMovie(movie.id);
+            });
+
+            listItem.appendChild(deleteBtn);
+        }
+
         filmsList.appendChild(listItem);
     });
 }
+
 
 function displayMovieDetails(movieId) {
     movieDetails.style.display = 'flex';
@@ -90,7 +104,7 @@ function displayMovieDetails(movieId) {
             title.textContent = movie.title;
             runtime.textContent = `${movie.runtime} minutes`;
             description.textContent = movie.description;
-            showtime.textContent = `Showtime: ${movie.showtime}`;
+            showtime.textContent = `${movie.showtime}`;
 
             const availableTickets = movie.capacity - movie.tickets_sold;
             ticketNum.textContent = `${availableTickets} remaining tickets`;
@@ -109,6 +123,62 @@ function displayMovieDetails(movieId) {
         .catch(error => {
             console.error('Error fetching movie details:', error);
         });
+}
+
+function handleBuyTicket() {
+    const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
+    
+    if (availableTickets > 0) {
+        const updatedTicketsSold = currentMovie.tickets_sold + 1;
+        
+        fetch(`http://localhost:3000/films/${currentMovie.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                tickets_sold: updatedTicketsSold
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update tickets');
+            }
+            return response.json();
+        })
+        .then(updatedMovie => {
+            currentMovie.tickets_sold = updatedTicketsSold;
+            
+            const movieIndex = allMovies.findIndex(m => m.id === currentMovie.id);
+            if (movieIndex !== -1) {
+                allMovies[movieIndex].tickets_sold = updatedTicketsSold;
+            }
+            
+            const newAvailableTickets = currentMovie.capacity - currentMovie.tickets_sold;
+            ticketNum.textContent = `${newAvailableTickets} remaining tickets`;
+            
+            if (newAvailableTickets === 0) {
+                buyTicketBtn.textContent = 'Sold Out';
+                buyTicketBtn.disabled = true;
+                
+                const movieItems = filmsList.querySelectorAll('.film.item');
+                const listItem = Array.from(movieItems).find(item => 
+                    item.textContent.includes(currentMovie.title)
+                );
+                if (listItem) {
+                    listItem.classList.add('sold-out');
+                   
+                    const deleteBtn = listItem.querySelector('.delete-btn');
+                    if (deleteBtn) {
+                        deleteBtn.remove();
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating ticket count:', error);
+        });
+    }
 }
 
 function deleteMovie(movieId) {
@@ -150,38 +220,3 @@ function clearMovieDetails() {
     movieDetails.textContent = 'No movies available';
 }
 
-function handleBuyTicket() {
-    const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
-    
-    if (availableTickets > 0) {
-        const updatedTicketsSold = currentMovie.tickets_sold + 1;
-        
-        fetch(`http://localhost:3000/films/${currentMovie.id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                tickets_sold: updatedTicketsSold
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to update tickets');
-            }
-            return response.json();
-        })
-        .then(updatedMovie => {
-            currentMovie = updatedMovie;
-            
-            const movieIndex = allMovies.findIndex(m => m.id === currentMovie.id);
-            if (movieIndex !== -1) {
-                allMovies[movieIndex] = updatedMovie;
-            }
-            
-        })
-        .catch(error => {
-            console.error('Error updating ticket count:', error);
-        });
-    }
-}
