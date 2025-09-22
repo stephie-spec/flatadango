@@ -28,8 +28,10 @@ function fetchMovies() {
         .then(movies => {
             allMovies = movies;
             displayMovies(movies);
-            if (movies.length > 0) {
+            if (movies.length > 0 && !currentMovie) {
                 displayMovieDetails(movies[0].id);
+            } else if (currentMovie) {
+                displayMovieDetails(currentMovie.id); 
             }
         })
         .catch(error => {
@@ -177,21 +179,6 @@ function handleBuyTicket() {
                 allMovies[movieIndex] = updatedMovie;
             }
             
-            const availableTickets = currentMovie.capacity - currentMovie.tickets_sold;
-            ticketNum.textContent = `${availableTickets} remaining tickets`;
-            
-            if (availableTickets === 0) {
-                buyTicketBtn.textContent = 'Sold Out';
-                buyTicketBtn.disabled = true;
-                
-                const movieItems = filmsList.querySelectorAll('.film.item');
-                const listItem = Array.from(movieItems).find(item => 
-                    item.textContent.includes(currentMovie.title)
-                );
-                if (listItem) {
-                    listItem.classList.add('sold-out');
-                }
-            }
         })
         .catch(error => {
             console.error('Error updating ticket count:', error);
